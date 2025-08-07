@@ -4,7 +4,7 @@ const { getAll, createCar, updateCar, createInBulk, deleteCar, getAllMakeWise, g
 const authMiddleware = require("../middlewares/auth.middleware");
 const authorizeRoles = require("../middlewares/role.middleware");
 
-router.get("/getAll", authMiddleware, authorizeRoles("user"), getAll);
+router.get("/getAll", getAll);
 router.get("/getAll/make/:make", authMiddleware, authorizeRoles("admin"), getAllMakeWise);
 router.get("/getAll/model/:model", authMiddleware, getAllModelWise);
 router.get("/getAll/brand/:brand", authMiddleware, getAllBrandWise);
