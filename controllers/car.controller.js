@@ -10,6 +10,34 @@ exports.getAll = async (req, res) => {
         res.status(500).json({ message: "Interval server error" })
     }
 }
+exports.getAllAggregatedCars = async (req, res) => {
+    const { make } = req.params;
+    const { minPrice, maxPrice, color, city } = req.query;
+    try {
+        const matchStage = { make }
+        if (minPrice || maxPrice) {
+            matchStage.price = {}
+            if (minPrice) matchStage.price.$gte = Number(minPrice);
+            if (maxPrice) matchStage.price.$lte = Number(maxPrice);
+        }
+        if (color) {
+            matchStage.color = color
+        }
+        if (city) {
+            matchStage.city = city
+        }
+        const aggregatedCard = await Cars.aggregate([
+            { $match: matchStage },
+            { $sort: { price: -1 } },
+            { $group: { _id: "$fuelType", avePrice: { $avg: "$price" }, totalCars: { $sum: 1 } } }
+        ])
+        res.status(200).json({ message: "Aggregated cars", aggregatedCard: aggregatedCard })
+
+    } catch (err) {
+        console.log("error", err)
+        res.status(500).json({ message: "Internal server error" })
+    }
+}
 
 exports.getAllMakeWise = async (req, res) => {
     const { make } = req.params;
@@ -98,15 +126,15 @@ exports.getAllBrandWise = async (req, res) => {
 }
 
 exports.createCar = async (req, res) => {
-    const { name, brand, modal, make, price, userId } = req.body
+    const { make, model, year, price, color, mileage, fuelType, city, userId } = req.body;
     try {
-        const car = await Cars.findOne({ name })
+        const car = await Cars.findOne({ make, model, year, color });
         if (car) {
-            return res.status(401).json({ message: "This car already exit!" })
+            return res.status(401).json({ message: "This car already exists!" });
         }
-        const createNew = new Cars({ name, brand, modal, make, price, userId })
-        await createNew.save()
-        return res.status(201).json({ message: `${name} created successfully!` })
+        const createNew = new Cars({ make, model, year, price, color, mileage, fuelType, city, userId });
+        await createNew.save();
+        return res.status(201).json({ message: `${make} ${model} created successfully!` });
     }
     catch (err) {
         console.log("error", err)
